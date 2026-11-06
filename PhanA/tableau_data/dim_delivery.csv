@@ -3,63 +3,55 @@ delivery_key,shipping_mode,delivery_status,payment_type,order_status
 2,Standard Class,Late delivery,TRANSFER,PENDING
 3,Standard Class,Shipping on time,CASH,CLOSED
 4,Standard Class,Advance shipping,PAYMENT,PENDING_PAYMENT
-5,Standard Class,Shipping canceled,TRANSFER,CANCELED
-6,First Class,Late delivery,DEBIT,COMPLETE
-7,First Class,Late delivery,TRANSFER,PROCESSING
-8,Second Class,Late delivery,CASH,CLOSED
-9,First Class,Late delivery,CASH,CLOSED
-10,Second Class,Shipping canceled,TRANSFER,SUSPECTED_FRAUD
-11,Second Class,Late delivery,TRANSFER,PENDING
-12,Second Class,Late delivery,PAYMENT,PENDING_PAYMENT
-13,Same Day,Shipping on time,PAYMENT,PENDING_PAYMENT
-14,Same Day,Shipping on time,TRANSFER,PROCESSING
-15,Second Class,Shipping canceled,TRANSFER,CANCELED
-16,Second Class,Late delivery,DEBIT,COMPLETE
-17,Standard Class,Shipping on time,PAYMENT,PENDING_PAYMENT
-18,Standard Class,Advance shipping,TRANSFER,PROCESSING
-19,Standard Class,Late delivery,DEBIT,ON_HOLD
-20,Standard Class,Late delivery,DEBIT,COMPLETE
-21,First Class,Late delivery,PAYMENT,PENDING_PAYMENT
-22,Same Day,Late delivery,DEBIT,COMPLETE
-23,Same Day,Shipping canceled,TRANSFER,CANCELED
-24,Same Day,Late delivery,PAYMENT,PENDING_PAYMENT
-25,Standard Class,Shipping on time,TRANSFER,PROCESSING
-26,Second Class,Shipping on time,PAYMENT,PENDING_PAYMENT
-27,Standard Class,Shipping on time,TRANSFER,PENDING
-28,Standard Class,Advance shipping,TRANSFER,PENDING
-29,Standard Class,Late delivery,TRANSFER,PROCESSING
-30,Second Class,Late delivery,DEBIT,ON_HOLD
-31,Second Class,Shipping on time,DEBIT,COMPLETE
-32,Standard Class,Shipping canceled,TRANSFER,SUSPECTED_FRAUD
-33,Standard Class,Shipping on time,DEBIT,COMPLETE
-34,Standard Class,Advance shipping,DEBIT,ON_HOLD
-35,Standard Class,Late delivery,PAYMENT,PENDING_PAYMENT
-36,Same Day,Shipping on time,TRANSFER,PENDING
-37,Same Day,Shipping on time,CASH,CLOSED
-38,Second Class,Shipping on time,DEBIT,ON_HOLD
-39,Second Class,Late delivery,TRANSFER,PROCESSING
-40,Second Class,Shipping on time,CASH,CLOSED
-41,Standard Class,Shipping on time,DEBIT,ON_HOLD
-42,Standard Class,Advance shipping,CASH,CLOSED
-43,Standard Class,Late delivery,CASH,CLOSED
-44,Second Class,Late delivery,PAYMENT,PAYMENT_REVIEW
-45,Same Day,Late delivery,CASH,CLOSED
-46,Same Day,Shipping canceled,TRANSFER,SUSPECTED_FRAUD
-47,Second Class,Shipping on time,PAYMENT,PAYMENT_REVIEW
-48,Second Class,Shipping on time,TRANSFER,PENDING
-49,First Class,Late delivery,TRANSFER,PENDING
-50,First Class,Late delivery,DEBIT,ON_HOLD
-51,Standard Class,Advance shipping,PAYMENT,PAYMENT_REVIEW
-52,Same Day,Shipping on time,DEBIT,COMPLETE
-53,First Class,Shipping canceled,TRANSFER,CANCELED
-54,Second Class,Shipping on time,TRANSFER,PROCESSING
-55,First Class,Shipping canceled,TRANSFER,SUSPECTED_FRAUD
-56,Standard Class,Late delivery,PAYMENT,PAYMENT_REVIEW
-57,Standard Class,Shipping on time,PAYMENT,PAYMENT_REVIEW
-58,Same Day,Late delivery,TRANSFER,PENDING
-59,Same Day,Late delivery,TRANSFER,PROCESSING
-60,Same Day,Late delivery,PAYMENT,PAYMENT_REVIEW
-61,Same Day,Late delivery,DEBIT,ON_HOLD
-62,First Class,Late delivery,PAYMENT,PAYMENT_REVIEW
-63,Same Day,Shipping on time,PAYMENT,PAYMENT_REVIEW
-64,Same Day,Shipping on time,DEBIT,ON_HOLD
+5,First Class,Late delivery,DEBIT,COMPLETE
+6,First Class,Late delivery,TRANSFER,PROCESSING
+7,Second Class,Late delivery,CASH,CLOSED
+8,First Class,Late delivery,CASH,CLOSED
+9,Second Class,Late delivery,TRANSFER,PENDING
+10,Second Class,Late delivery,PAYMENT,PENDING_PAYMENT
+11,Same Day,Shipping on time,PAYMENT,PENDING_PAYMENT
+12,Same Day,Shipping on time,TRANSFER,PROCESSING
+13,Second Class,Late delivery,DEBIT,COMPLETE
+14,Standard Class,Shipping on time,PAYMENT,PENDING_PAYMENT
+15,Standard Class,Advance shipping,TRANSFER,PROCESSING
+16,Standard Class,Late delivery,DEBIT,ON_HOLD
+17,Standard Class,Late delivery,DEBIT,COMPLETE
+18,First Class,Late delivery,PAYMENT,PENDING_PAYMENT
+19,Same Day,Late delivery,DEBIT,COMPLETE
+20,Same Day,Late delivery,PAYMENT,PENDING_PAYMENT
+21,Standard Class,Shipping on time,TRANSFER,PROCESSING
+22,Second Class,Shipping on time,PAYMENT,PENDING_PAYMENT
+23,Standard Class,Shipping on time,TRANSFER,PENDING
+24,Standard Class,Advance shipping,TRANSFER,PENDING
+25,Standard Class,Late delivery,TRANSFER,PROCESSING
+26,Second Class,Late delivery,DEBIT,ON_HOLD
+27,Second Class,Shipping on time,DEBIT,COMPLETE
+28,Standard Class,Shipping on time,DEBIT,COMPLETE
+29,Standard Class,Advance shipping,DEBIT,ON_HOLD
+30,Standard Class,Late delivery,PAYMENT,PENDING_PAYMENT
+31,Same Day,Shipping on time,TRANSFER,PENDING
+32,Same Day,Shipping on time,CASH,CLOSED
+33,Second Class,Shipping on time,DEBIT,ON_HOLD
+34,Second Class,Late delivery,TRANSFER,PROCESSING
+35,Second Class,Shipping on time,CASH,CLOSED
+36,Standard Class,Shipping on time,DEBIT,ON_HOLD
+37,Standard Class,Advance shipping,CASH,CLOSED
+38,Standard Class,Late delivery,CASH,CLOSED
+39,Second Class,Late delivery,PAYMENT,PAYMENT_REVIEW
+40,Same Day,Late delivery,CASH,CLOSED
+41,Second Class,Shipping on time,PAYMENT,PAYMENT_REVIEW
+42,Second Class,Shipping on time,TRANSFER,PENDING
+43,First Class,Late delivery,TRANSFER,PENDING
+44,First Class,Late delivery,DEBIT,ON_HOLD
+45,Standard Class,Advance shipping,PAYMENT,PAYMENT_REVIEW
+46,Same Day,Shipping on time,DEBIT,COMPLETE
+47,Second Class,Shipping on time,TRANSFER,PROCESSING
+48,Standard Class,Late delivery,PAYMENT,PAYMENT_REVIEW
+49,Standard Class,Shipping on time,PAYMENT,PAYMENT_REVIEW
+50,Same Day,Late delivery,TRANSFER,PENDING
+51,Same Day,Late delivery,TRANSFER,PROCESSING
+52,Same Day,Late delivery,PAYMENT,PAYMENT_REVIEW
+53,Same Day,Late delivery,DEBIT,ON_HOLD
+54,First Class,Late delivery,PAYMENT,PAYMENT_REVIEW
+55,Same Day,Shipping on time,PAYMENT,PAYMENT_REVIEW
+56,Same Day,Shipping on time,DEBIT,ON_HOLD

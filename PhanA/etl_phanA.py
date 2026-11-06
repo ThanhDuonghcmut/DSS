@@ -10,17 +10,31 @@ Chạy:
 """
 import json
 import os
+import zipfile
 import pandas as pd
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SRC = os.path.join(HERE, "..", "dataset", "dataco-supply-chain", "DataCoSupplyChainDataset.csv")
+DATA_DIR = os.path.join(HERE, "..", "dataset", "dataco-supply-chain")
+SRC = os.path.join(DATA_DIR, "DataCoSupplyChainDataset.csv")
+SRC_ZIP = SRC + ".zip"          # dùng khi chưa giải nén CSV
 OUT = os.path.join(HERE, "tableau_data")
 os.makedirs(OUT, exist_ok=True)
+
+# Trạng thái đơn bị LOẠI khỏi mô hình phân tích (quyết định nghiệp vụ, xem Mục 3.3 báo cáo):
+#  - CANCELED        : đơn đã huỷ, không phát sinh doanh thu thực
+#  - SUSPECTED_FRAUD : đơn nghi gian lận, không đáng tin để tính doanh thu/lợi nhuận
+# Hai nhóm này cũng chính là toàn bộ dòng « Shipping canceled » (đơn không được giao),
+# nếu giữ lại sẽ bị tính là « đúng hạn » và làm sai tỷ lệ giao trễ.
+EXCLUDED_STATUS = ["CANCELED", "SUSPECTED_FRAUD"]
 
 # ---------------------------------------------------------------------------
 # 1. NẠP & LÀM SẠCH
 # ---------------------------------------------------------------------------
-df = pd.read_csv(SRC, encoding="latin-1")
+if os.path.exists(SRC):
+    df = pd.read_csv(SRC, encoding="latin-1")
+else:
+    with zipfile.ZipFile(SRC_ZIP) as z:
+        df = pd.read_csv(z.open("DataCoSupplyChainDataset.csv"), encoding="latin-1")
 raw_rows, raw_cols = df.shape
 
 # 1.1 Bỏ cột rác / không mang thông tin phân tích
@@ -53,6 +67,37 @@ df["ship_dt"] = pd.to_datetime(df["shipping date (DateOrders)"], format="%m/%d/%
 
 # 1.6 Trường dẫn xuất: độ trễ giao hàng (ngày thực - ngày kế hoạch)
 df["shipping_delay"] = df["Days for shipping (real)"] - df["Days for shipment (scheduled)"]
+
+# 1.7 Loại đơn CANCELED / SUSPECTED_FRAUD (lọc theo Order Status; làm SAU các bước làm
+# sạch nên các số liệu làm sạch ở trên vẫn là số liệu của dữ liệu thô)
+excl_mask = df["Order Status"].isin(EXCLUDED_STATUS)
+_by_order = df.groupby("Order Id")
+before_filter = {     # KPI của dữ liệu thô (trước khi lọc) để báo cáo so sánh tác động
+    "rows": int(len(df)), "orders": int(df["Order Id"].nunique()),
+    "customers": int(df["Customer Id"].nunique()),
+    "total_sales": round(float(df["Sales"].sum()), 2),
+    "total_profit": round(float(df["Order Profit Per Order"].sum()), 2),
+    "profit_margin_pct": round(float(df["Order Profit Per Order"].sum() / df["Sales"].sum() * 100), 2),
+    "late_delivery_rate_order_pct": round(float(_by_order["Late_delivery_risk"].max().mean() * 100), 2),
+    "aov": round(float(_by_order["Order Item Total"].sum().mean()), 2),
+    "dim_delivery_rows": int(len(df[["Shipping Mode", "Delivery Status", "Type", "Order Status"]]
+                                 .drop_duplicates())),
+}
+excluded = {
+    "before": before_filter,
+    "statuses": EXCLUDED_STATUS,
+    "rows": int(excl_mask.sum()),
+    "orders": int(df.loc[excl_mask, "Order Id"].nunique()),
+    "rows_by_status": {s: int((df["Order Status"] == s).sum()) for s in EXCLUDED_STATUS},
+    "shipping_canceled_rows": int((df["Delivery Status"] == "Shipping canceled").sum()),
+    "sales": round(float(df.loc[excl_mask, "Sales"].sum()), 2),
+    "profit": round(float(df.loc[excl_mask, "Order Profit Per Order"].sum()), 2),
+}
+# bảo đảm không đơn nào có trạng thái hỗn hợp (nếu có, lọc theo dòng sẽ làm đơn bị cụt)
+_mixed = df.groupby("Order Id")["Order Status"].nunique().gt(1).sum()
+assert _mixed == 0, f"{_mixed} đơn có nhiều hơn một Order Status"
+df = df[~excl_mask].reset_index(drop=True)
+assert not (df["Delivery Status"] == "Shipping canceled").any(), "còn dòng Shipping canceled"
 
 # ---------------------------------------------------------------------------
 # 2. DỰNG CÁC BẢNG DIMENSION
@@ -209,6 +254,7 @@ n_orders = int(f["order_id"].nunique())
 summary = {
     "raw_rows": int(raw_rows), "raw_cols": int(raw_cols),
     "clean_rows": int(len(f)), "dup_removed": dups,
+    "excluded": excluded,
     "date_min": str(df["order_dt"].min().date()), "date_max": str(df["order_dt"].max().date()),
     "n_orders": n_orders, "n_customers": int(dim_customer.shape[0]),
     "n_products": int(dim_product.shape[0]),
