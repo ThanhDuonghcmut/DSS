@@ -56,6 +56,14 @@ INT = '#,##0'
 PCT = '0.00%'
 
 
+FACTS = {}  # số liệu dùng trong các đoạn mô tả; tính từ CSV để không lệch khi ETL đổi
+
+
+def vn(x, dec=1):
+    """Số kiểu Việt Nam: dấu phẩy thập phân, dấu chấm hàng nghìn."""
+    return f"{x:,.{dec}f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
 def title(ws, text):
     ws["A1"] = text
     ws["A1"].font = BOLD
@@ -158,6 +166,22 @@ def load():
                  profit=("profit", "mean"), gross=("sales", "mean")).reset_index())
     overall = dict(lines=len(f), gross=f["sales"].mean(), d0=f["discount_rate"].mean(),
                    profit=f["profit"].mean())
+    m = mode.set_index("shipping_mode")
+    others = market[market["market"] != "Pacific Asia"]
+    pac = market[market["market"] == "Pacific Asia"].iloc[0]
+    d = dept.set_index("department_name")
+    FACTS.update(
+        orders=int(mode["n"].sum()), lines=len(f),
+        late=(mode["n"] * mode["late"]).sum() / mode["n"].sum() * 100,
+        late_fc=m.loc["First Class", "late"] * 100, late_sc=m.loc["Second Class", "late"] * 100,
+        d0=overall["d0"] * 100, corr=round(float(f["discount_rate"].corr(f["quantity"])), 3) + 0.0,
+        pac_profit=pac["profit"], pac_sales=pac["sales"],
+        oth_profit_min=others["profit"].min(), oth_profit_max=others["profit"].max(),
+        oth_sales_min=others["sales"].min(), oth_sales_max=others["sales"].max(),
+        margin_book=d.loc["Book Shop", "profit"] / d.loc["Book Shop", "net"] * 100,
+        margin_fan=d.loc["Fan Shop", "profit"] / d.loc["Fan Shop", "net"] * 100,
+        margin_all=dept["profit"].sum() / dept["net"].sum() * 100,
+    )
     return mode, market, dept, band, overall
 
 
@@ -167,9 +191,9 @@ def load():
 def sheet_data(wb, mode, market, dept, band, overall):
     ws = wb.create_sheet("DuLieu")
     title(ws, "Dữ liệu tham chiếu cho Phần B (tổng hợp từ CSV Phần A)")
-    ws["A2"] = ("Nguồn: PhanA/tableau_data/*.csv, tính trên toàn bộ 65.752 đơn / 180.519 dòng, "
-                "chưa lọc Order Status - khớp số liệu Phần A. Giá trị tĩnh; chạy lại build_model.py "
-                "nếu ETL đổi.")
+    ws["A2"] = (f"Nguồn: PhanA/tableau_data/*.csv, tính trên {vn(FACTS['orders'], 0)} đơn / "
+                f"{vn(FACTS['lines'], 0)} dòng, đã loại đơn CANCELED và SUSPECTED_FRAUD - khớp số liệu "
+                "Phần A. Giá trị tĩnh; chạy lại build_model.py nếu ETL đổi.")
 
     # A. Phương thức vận chuyển: hàng 5-8, tổng hàng 9
     ws["A3"] = "A. Phương thức vận chuyển (mức đơn hàng)"
@@ -279,7 +303,8 @@ def sheet_bt1(wb, mode, ref, ref20):
     ws = wb.create_sheet("BT1_Solver")
     title(ws, "Bài toán 1: Cơ cấu phương thức vận chuyển - tối đa lợi nhuận, kiểm soát tỷ lệ trễ")
     textbox(ws, "H1:N12",
-            "Bối cảnh: tỷ lệ giao trễ hiện 54,8% (First Class 95%, Second Class 77%). Ban điều hành "
+            f"Bối cảnh: tỷ lệ giao trễ hiện {vn(FACTS['late'])}% (First Class {vn(FACTS['late_fc'], 0)}%, "
+            f"Second Class {vn(FACTS['late_sc'], 0)}%). Ban điều hành "
             "đặt mục tiêu đưa tỷ lệ trễ chung về ≤ 45%. Câu hỏi: nên dịch chuyển tỷ trọng đơn giữa 4 "
             "phương thức thế nào để lợi nhuận cao nhất mà vẫn đạt ngưỡng trễ?\n\nTham số do người ra "
             "quyết định đặt (ô nền xanh): ngưỡng trễ; biên dịch chuyển ±15 điểm % vì khách chọn phương "
@@ -400,8 +425,8 @@ def sheet_bt2(wb, band, overall):
     ws = wb.create_sheet("BT2_WhatIf")
     title(ws, "Bài toán 2: Chính sách chiết khấu - lợi nhuận thay đổi thế nào khi đổi mức giảm giá")
     textbox(ws, "H1:N14",
-            "Bối cảnh: chiết khấu trung bình hiện ≈10,2%. Dữ liệu cho thấy chiết khấu KHÔNG làm tăng số "
-            "lượng mua (tương quan 0,000) nhưng làm giảm lợi nhuận/dòng. Câu hỏi: nếu đổi mức chiết "
+            f"Bối cảnh: chiết khấu trung bình hiện ≈{vn(FACTS['d0'])}%. Dữ liệu cho thấy chiết khấu KHÔNG làm tăng số "
+            f"lượng mua (tương quan {vn(FACTS['corr'], 3)}) nhưng làm giảm lợi nhuận/dòng. Câu hỏi: nếu đổi mức chiết "
             "khấu, lợi nhuận đổi bao nhiêu, và cầu phải nhạy tới mức nào thì tăng giảm giá mới đáng?\n\n"
             "Mô hình: lợi nhuận/dòng = a + b × d (hồi quy từ 6 dải chiết khấu, hàm INTERCEPT/SLOPE); "
             "số dòng đơn mới = N0 × (1 + η × (d − d0) × 100). η là GIẢ ĐỊNH (dữ liệu cho η ≈ 0, "
@@ -514,7 +539,8 @@ def sheet_bt3(wb, dept):
     ws = wb.create_sheet("BT3_GoalSeek")
     title(ws, "Bài toán 3: Điểm hoà vốn theo ngành hàng - sản lượng tối thiểu để không lỗ")
     textbox(ws, "H1:N14",
-            "Bối cảnh: biên lợi nhuận gộp của các ngành chênh nhau (Book Shop ≈7,8%, Fan Shop ≈10,7%). "
+            f"Bối cảnh: biên lợi nhuận gộp của các ngành chênh nhau (Book Shop ≈{vn(FACTS['margin_book'])}%, "
+            f"Fan Shop ≈{vn(FACTS['margin_fan'])}%). "
             "Mỗi ngành phải gánh chi phí cố định (kho, nhân sự, marketing). Câu hỏi: ngành nào đang "
             "bán sát điểm hoà vốn, tức dễ lỗ khi sản lượng giảm?\n\nMô hình: Lợi nhuận = p × Q − v × Q − F. "
             "p (giá thuần/đơn vị) và v (biến phí/đơn vị = p − lợi nhuận/đơn vị) lấy từ dữ liệu. "
@@ -621,8 +647,9 @@ def sheet_bt4(wb, market, ref):
     ws = wb.create_sheet("BT4_Solver")
     title(ws, "Bài toán 4: Phân bổ năng lực xử lý đơn giữa 5 thị trường - tối đa lợi nhuận")
     textbox(ws, "K1:Q12",
-            "Bối cảnh: lợi nhuận/đơn của Pacific Asia chỉ $48,8, trong khi 4 thị trường còn lại $63-66; "
-            "doanh thu/đơn của Pacific Asia cũng thấp hơn ($471 so với $586-598). Câu hỏi: với cùng "
+            f"Bối cảnh: lợi nhuận/đơn của Pacific Asia chỉ ${vn(FACTS['pac_profit'])}, trong khi 4 thị trường còn lại "
+            f"${vn(FACTS['oth_profit_min'], 0)}-{vn(FACTS['oth_profit_max'], 0)}; doanh thu/đơn của Pacific Asia cũng thấp hơn "
+            f"(${vn(FACTS['pac_sales'], 0)} so với ${vn(FACTS['oth_sales_min'], 0)}-{vn(FACTS['oth_sales_max'], 0)}). Câu hỏi: với cùng "
             "tổng số đơn, nên phân bổ nguồn lực (kho, vận chuyển, marketing) lệch về thị trường nào?\n\n"
             "Giả định: mỗi thị trường tăng/giảm tối đa ±20% so với hiện tại (nhu cầu và năng lực có "
             "giới hạn); lợi nhuận/đơn của thị trường giữ nguyên khi số đơn đổi - đây là giả định mạnh "
@@ -731,16 +758,16 @@ def sheet_overview(wb):
          "Mặc định 0 để mô hình chỉ dùng lợi nhuận lấy từ dữ liệu; nhập số dương (ví dụ 20) để thử độ nhạy",
          "Có số chi phí chăm sóc khách hàng thật"),
         ("G2", "Ngưỡng tỷ lệ trễ chung", LATE_CAP, "BT1_Solver!B16",
-         "Mục tiêu quản trị do ban điều hành đặt, thấp hơn hiện tại 54,8% nhưng khả thi trong biên ±15 điểm %",
+         f"Mục tiêu quản trị do ban điều hành đặt, thấp hơn hiện tại {vn(FACTS['late'])}% nhưng khả thi trong biên ±15 điểm %",
          "Ban điều hành đặt SLA khác"),
         ("G3", "Biên dịch chuyển tỷ trọng phương thức", SHIFT_BAND, "BT1_Solver!B17",
          "Khách chọn phương thức theo nhu cầu; ±15 điểm % đủ rộng để ngưỡng 45% có nghiệm",
          "Có dữ liệu khách đổi phương thức"),
         ("G4", "η: % sản lượng tăng mỗi +1 điểm % chiết khấu", "0% (cơ sở) đến 3%", "BT2_WhatIf!B9",
-         "Dữ liệu cho η ≈ 0 (tương quan 0,000) nên mọi η > 0 là giả định để thử độ nhạy",
+         f"Dữ liệu cho η ≈ 0 (tương quan {vn(FACTS['corr'], 3)}) nên mọi η > 0 là giả định để thử độ nhạy",
          "Có thí nghiệm giảm giá thật (A/B test)"),
         ("G5", "Chi phí cố định / doanh thu thuần ngành", FIXED_COST_RATIO, "BT3_GoalSeek!B7",
-         "Dữ liệu không có chi phí cố định; 7% thấp hơn biên lợi nhuận 10,8% nên ngành trung bình vẫn có lãi",
+         f"Dữ liệu không có chi phí cố định; 7% thấp hơn biên lợi nhuận {vn(FACTS['margin_all'])}% nên ngành trung bình vẫn có lãi",
          "Có báo cáo chi phí cố định theo ngành"),
         ("G6", "Biên nhu cầu mỗi thị trường", DEMAND_BAND, "BT4_Solver!B13",
          "Giới hạn năng lực và nhu cầu; ±20% là mức dịch chuyển nguồn lực trong một kỳ kế hoạch",
@@ -751,7 +778,7 @@ def sheet_overview(wb):
             c = put(ws, f"{get_column_letter(1 + j)}{12 + i}", v, PCT if (j == 2 and isinstance(v, float) and v < 1) else None)
             c.alignment = WRAP
     ws["C12"].number_format = USD
-    ws["A19"] = ("Lưu ý: số liệu tính trên toàn bộ đơn kể cả đơn hủy/nghi gian lận (khớp Phần A); "
+    ws["A19"] = ("Lưu ý: số liệu đã loại đơn CANCELED và SUSPECTED_FRAUD (khớp Phần A); "
                  "dữ liệu giao hàng có dạng mô phỏng (số ngày thực tế gần như cố định theo phương thức) nên "
                  "kết luận về phương thức vận chuyển chỉ đúng 'trong dữ liệu này'.")
     ws["A19"].alignment = WRAP
